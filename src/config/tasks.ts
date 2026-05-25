@@ -70,17 +70,17 @@ export const stufe2Tasks: TaskConfig[] = [
       {
         id: 'K1_C',
         label:
-          'Zahlungsverkehr (+498 TEUR) und Kreditbearbeitung (−1.819 TEUR); gesamt −1.321 TEUR',
+          'Zahlungsverkehr (+498) und Kreditbearbeitung (−1.177); gesamt −679 TEUR',
       },
       {
         id: 'K1_D',
         label:
-          'Kundenservice (+1.894 TEUR) und Privatkundengeschäft (+320 TEUR); gesamt +2.214 TEUR',
+          'Kundenservice (+1.894) und Immobilienservice (+340); gesamt +2.234 TEUR',
       },
       {
         id: 'K1_E',
         label:
-          'Zahlungsverkehr (+498 TEUR) und Privatkundengeschäft (+320 TEUR); gesamt +818 TEUR',
+          'Zahlungsverkehr (+498) und Immobilienservice (+340); gesamt +838 TEUR',
       },
     ],
     correctAnswer: 'K1_A',
@@ -115,7 +115,7 @@ export const stufe2Tasks: TaskConfig[] = [
       {
         id: 'K2_D',
         label:
-          'Zahlungsverkehr und Privatkundengeschäft übersteigen Plan; Kreditbearbeitung kompensiert teilweise',
+          'Zahlungsverkehr und Immobilienservice übersteigen Plan; Kreditbearbeitung kompensiert teilweise',
       },
       {
         id: 'K2_E',
@@ -145,7 +145,7 @@ export const stufe2Tasks: TaskConfig[] = [
       {
         id: 'V2_B',
         label:
-          'Zahlungsverkehr (+742 TEUR über FC); Privatkundengeschäft am treffsichersten',
+          'Zahlungsverkehr (+742 über FC); Immobilienservice am treffsichersten',
       },
       {
         id: 'V2_C',
@@ -155,7 +155,7 @@ export const stufe2Tasks: TaskConfig[] = [
       {
         id: 'V2_D',
         label:
-          'Privatkundengeschäft (+530 TEUR über FC); Zahlungsverkehr am treffsichersten',
+          'Verwaltung & Steuerung (+530 über FC); Zahlungsverkehr am treffsichersten',
       },
       {
         id: 'V2_E',
@@ -178,10 +178,10 @@ export const stufe2Tasks: TaskConfig[] = [
     questionType: 'mc',
     options: [
       { id: 'K3_A', label: 'Sachaufwand IT (+397 TEUR)' },
-      { id: 'K3_B', label: 'Abschreibungen (+235 TEUR)' },
-      { id: 'K3_C', label: 'Sonstige Sachaufwendungen (+189 TEUR)' },
-      { id: 'K3_D', label: 'Raumkosten (+142 TEUR)' },
-      { id: 'K3_E', label: 'Fremdleistungen (+98 TEUR)' },
+      { id: 'K3_B', label: 'Externe Dienstleistungen (+209 TEUR)' },
+      { id: 'K3_C', label: 'Kommunikation & Porto (+141 TEUR)' },
+      { id: 'K3_D', label: 'Raumkosten (+46 TEUR)' },
+      { id: 'K3_E', label: 'Reise- und Fahrtkosten (+70 TEUR)' },
     ],
     correctAnswer: 'K3_A',
     hasTimer: true,
@@ -238,15 +238,15 @@ export const stufe2Tasks: TaskConfig[] = [
       },
       {
         id: 'V3_B',
-        label: 'Backoffice (KS-112) +612 TEUR, Inbound (KS-110) ausgeglichen',
+        label: 'Backoffice (KS-112) +612 TEUR, Inbound ausgeglichen',
       },
       {
         id: 'V3_C',
-        label: 'Reklamationsbearbeitung (KS-115) +781 TEUR dominiert',
+        label: 'Inbound (KS-110) und Outbound (KS-111) etwa gleich, Backoffice gering',
       },
       {
         id: 'V3_D',
-        label: 'Gleichmäßig verteilt über alle Kostenstellen im Kundenservice',
+        label: 'Gleichmäßig über alle Kostenstellen verteilt',
       },
       {
         id: 'V3_E',
