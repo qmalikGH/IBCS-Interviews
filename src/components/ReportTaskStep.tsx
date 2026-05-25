@@ -11,9 +11,8 @@
 // Flow per task:
 //   1. Show question → "Aufgabe starten" button
 //   2. Click starts hidden timer; MC options appear
-//   3. Participant selects answer → timer stops → save to DB
-//   4. SEQ rating (1–7) → save → advance to next task
-//   5. After last task → onComplete() is called
+//   3. Participant selects answer → timer stops → save to DB → next task
+//   4. After last task → onComplete() is called
 // ============================================================
 
 import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
@@ -22,7 +21,6 @@ import { startTimer, stopTimer } from '@/lib/timer';
 import { saveResponse } from '@/lib/supabase';
 import { buildPbiPageUrl } from '@/config/pairs';
 import type { TaskConfig } from '@/config/tasks';
-import type { DbResponse } from '@/types/database';
 
 // ── Types ─────────────────────────────────────────────────────
 
@@ -34,19 +32,7 @@ interface ReportTaskStepProps {
   onComplete: () => void;
 }
 
-type TaskPhase = 'intro' | 'answering' | 'seq';
-
-// ── SEQ labels ────────────────────────────────────────────────
-
-const SEQ_LABELS: Record<number, string> = {
-  1: '1 — Sehr schwierig',
-  2: '2',
-  3: '3',
-  4: '4 — Mittel',
-  5: '5',
-  6: '6',
-  7: '7 — Sehr leicht',
-};
+type TaskPhase = 'intro' | 'answering';
 
 // ── Component ─────────────────────────────────────────────────
 
@@ -64,14 +50,11 @@ export default function ReportTaskStep({
   const [taskIndex, setTaskIndex]              = useState(0);
   const [taskPhase, setTaskPhase]              = useState<TaskPhase>('intro');
   const [selectedOption, setSelectedOption]    = useState<string | null>(null);
-  const [seqScore, setSeqScore]                = useState<number | null>(null);
   const [isSaving, setIsSaving]                = useState(false);
   const [error, setError]                      = useState<string | null>(null);
   const [iframeLoaded, setIframeLoaded]        = useState(false);
 
-  // Pending response built up across sub-steps
-  const pendingResponse = useRef<Partial<DbResponse>>({});
-  const timerStart      = useRef<number | null>(null);
+  const timerStart = useRef<number | null>(null);
 
   const currentTask = tasks[taskIndex];
 
@@ -101,11 +84,10 @@ export default function ReportTaskStep({
     timerStart.current = startTimer();
     setTaskPhase('answering');
     setSelectedOption(null);
-    setSeqScore(null);
     setError(null);
   }, []);
 
-  /** Participant selects an MC option */
+  /** Participant selects an MC option — save immediately and advance */
   const handleSelectOption = useCallback(
     async (optionId: string) => {
       if (taskPhase !== 'answering' || isSaving) return;
@@ -115,47 +97,21 @@ export default function ReportTaskStep({
         : null;
 
       setSelectedOption(optionId);
-
-      // Build the response row (SEQ will be filled after rating)
-      pendingResponse.current = {
-        session_id:  sessionId ?? '',
-        stage,
-        task_id:     currentTask.id,
-        report_type: reportType,
-        answer:      optionId,
-        is_correct:  optionId === currentTask.correctAnswer ? 2 : 0,
-        time_ms:     elapsedMs,
-        seq_score:   null,
-        preference:  null,
-      };
-
-      setTaskPhase('seq');
-    },
-    [taskPhase, isSaving, sessionId, stage, currentTask, reportType],
-  );
-
-  /** Participant submits SEQ rating */
-  const handleSubmitSeq = useCallback(
-    async (score: number) => {
-      if (isSaving) return;
       setIsSaving(true);
       setError(null);
-      setSeqScore(score);
-
-      const responseData: DbResponse = {
-        ...(pendingResponse.current as DbResponse),
-        seq_score: score,
-        // answered_at is set by the DB default — Supabase inserts it automatically;
-        // we cast to satisfy the type but it will be overwritten server-side.
-        answered_at: new Date().toISOString(),
-        id: '',
-      };
 
       try {
-        // Remove id / answered_at — ResponseInsert omits them
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { id, answered_at, ...insertData } = responseData;
-        await saveResponse({ ...insertData, seq_score: score });
+        await saveResponse({
+          session_id:  sessionId ?? '',
+          stage,
+          task_id:     currentTask.id,
+          report_type: reportType,
+          answer:      optionId,
+          is_correct:  optionId === currentTask.correctAnswer ? 2 : 0,
+          time_ms:     elapsedMs,
+          seq_score:   null,
+          preference:  null,
+        });
       } catch (err) {
         console.error('saveResponse failed:', err);
         setError('Antwort konnte nicht gespeichert werden. Bitte versuche es erneut.');
@@ -174,12 +130,10 @@ export default function ReportTaskStep({
         setTaskIndex((prev) => prev + 1);
         setTaskPhase('intro');
         setSelectedOption(null);
-        setSeqScore(null);
-        pendingResponse.current = {};
         timerStart.current = null;
       }
     },
-    [isSaving, taskIndex, tasks.length, nextStep, onComplete],
+    [taskPhase, isSaving, sessionId, stage, currentTask, reportType, taskIndex, tasks.length, nextStep, onComplete],
   );
 
   // ── Render ────────────────────────────────────────────────
@@ -290,69 +244,14 @@ export default function ReportTaskStep({
             </div>
           )}
 
-          {/* ── SEQ phase ───────────────────────────────────── */}
-          {taskPhase === 'seq' && (
-            <div className="space-y-5">
-              {/* Show which answer was chosen (read-only) */}
-              <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3">
-                <p className="text-[11px] font-semibold uppercase tracking-widest text-green-600">
-                  Deine Antwort
-                </p>
-                <p className="mt-1 text-sm font-medium text-gray-800">
-                  {currentTask.options.find((o) => o.id === selectedOption)?.label ?? '—'}
-                </p>
-              </div>
-
-              {/* Divider */}
-              <div className="border-t border-gray-100" />
-
-              {/* SEQ question */}
-              <div>
-                <p className="text-sm font-semibold text-gray-800">
-                  Wie schwierig war diese Aufgabe?
-                </p>
-                <p className="mt-1 text-xs text-gray-400">
-                  Bitte bewerte die Aufgabe.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-7 gap-1.5">
-                {[1, 2, 3, 4, 5, 6, 7].map((score) => (
-                  <button
-                    key={score}
-                    onClick={() => handleSubmitSeq(score)}
-                    disabled={isSaving || seqScore !== null}
-                    aria-label={SEQ_LABELS[score]}
-                    className={[
-                      'rounded-lg py-3.5 text-sm font-bold transition-all duration-100',
-                      'focus:outline-none focus:ring-2 focus:ring-blue-500/40',
-                      seqScore === score
-                        ? 'bg-blue-600 text-white shadow-md'
-                        : 'border border-gray-200 bg-white text-gray-700 shadow-sm hover:border-blue-400 hover:bg-blue-50 hover:shadow-md',
-                      (isSaving || seqScore !== null) && seqScore !== score
-                        ? 'cursor-not-allowed opacity-40'
-                        : '',
-                    ].join(' ')}
-                  >
-                    {score}
-                  </button>
-                ))}
-              </div>
-
-              <div className="flex justify-between text-[11px] font-medium text-gray-400">
-                <span>Sehr schwierig</span>
-                <span>Sehr leicht</span>
-              </div>
-
-              {isSaving && (
-                <div className="flex items-center gap-2 text-xs text-gray-400">
-                  <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                  </svg>
-                  Speichert…
-                </div>
-              )}
+          {/* ── Saving indicator ──────────────────────────────── */}
+          {isSaving && (
+            <div className="mt-4 flex items-center gap-2 text-xs text-gray-400">
+              <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+              </svg>
+              Speichert…
             </div>
           )}
 
@@ -360,9 +259,9 @@ export default function ReportTaskStep({
           {error && (
             <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3">
               <p className="text-sm text-red-700">{error}</p>
-              {taskPhase === 'seq' && seqScore !== null && (
+              {selectedOption && (
                 <button
-                  onClick={() => handleSubmitSeq(seqScore)}
+                  onClick={() => handleSelectOption(selectedOption)}
                   className="mt-2 text-sm font-semibold text-red-600 underline hover:text-red-800"
                 >
                   Erneut versuchen
