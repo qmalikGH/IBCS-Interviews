@@ -9,6 +9,12 @@
 // Sub-step machine:
 //   question → visual_a → visual_b → preference
 //
+// PRELOADING: Both iframes are mounted from component init
+// and load in the background. Visual A preloads while the
+// question screen is shown; Visual B preloads while the user
+// answers Visual A. The "Darstellung anzeigen" button stays
+// disabled until iframe A is ready.
+//
 // Special cases:
 //   P2  — no MC, no timer; pure preference (skip visual MC)
 //   P3  — scenario-notation hint before the IBCS visual
@@ -87,8 +93,9 @@ export default function DuelStep({
   const [estimationB, setEstimationB]   = useState<string>('');
   const [preference, setPreference]     = useState<'a' | 'b' | null>(null);
 
-  // iframe loading state
-  const [iframeLoaded, setIframeLoaded] = useState(false);
+  // Separate loading states for both iframes (preload in parallel)
+  const [iframeLoadedA, setIframeLoadedA] = useState(false);
+  const [iframeLoadedB, setIframeLoadedB] = useState(false);
 
   // ── Save helpers ──────────────────────────────────────────
 
@@ -143,9 +150,17 @@ export default function DuelStep({
 
   // ── Advance helpers ───────────────────────────────────────
 
-  /** iframe finished loading → start timer */
-  function handleIframeLoad() {
-    setIframeLoaded(true);
+  /** User clicks "Darstellung anzeigen" — show visual A, start timer */
+  function handleShowVisualA() {
+    setSubStep('visual_a');
+    if (pair.hasTimer) {
+      timerStartRef.current = startTimer();
+    }
+  }
+
+  /** Visual B becomes active — start its timer */
+  function activateVisualB() {
+    setSubStep('visual_b');
     if (pair.hasTimer) {
       timerStartRef.current = startTimer();
     }
@@ -163,11 +178,10 @@ export default function DuelStep({
     const isCorrect: 0 | 2 = optionId === correctA ? 2 : 0;
     await saveVisualResponse(typeA, optionId, isCorrect, timeMs);
 
-    // Reset iframe state for visual B, then advance
+    // Advance to visual B after short delay
     setTimeout(() => {
-      setIframeLoaded(false);
       timerStartRef.current = null;
-      setSubStep('visual_b');
+      activateVisualB();
     }, 400);
   }
 
@@ -196,9 +210,8 @@ export default function DuelStep({
       : null;
 
     await saveVisualResponse(typeA, val, 1, timeMs);
-    setIframeLoaded(false);
     timerStartRef.current = null;
-    setSubStep('visual_b');
+    activateVisualB();
   }
 
   /** P5 estimation submit for visual B */
@@ -231,61 +244,31 @@ export default function DuelStep({
     );
   }
 
-  function renderQuestion() {
-    return (
+  // ── Which iframe is currently the "active" one? ───────────
+  const activeIframeLoaded =
+    subStep === 'visual_a' ? iframeLoadedA :
+    subStep === 'visual_b' ? iframeLoadedB :
+    true;
+
+  // ── Main render ───────────────────────────────────────────
+
+  return (
+    <div className="relative">
+
+      {/* ═══════════════════════════════════════════════════════ */}
+      {/* PRELOADED IFRAMES — always in DOM, visibility via CSS  */}
+      {/* ═══════════════════════════════════════════════════════ */}
       <div
-        className="flex min-h-screen flex-col items-center justify-center gap-8 bg-[#f8f9fa] px-6 py-12"
-        tabIndex={-1}
-        onKeyDown={(e) => e.key === 'Enter' && setSubStep('visual_a')}
+        style={{
+          display: (subStep === 'visual_a' || subStep === 'visual_b') ? 'flex' : 'none',
+        }}
+        className="h-screen w-full overflow-hidden bg-[#f8f9fa]"
       >
-        <div className="w-full max-w-2xl space-y-6 text-center">
-          {renderProgress()}
-          <h2 className="text-3xl font-bold text-gray-900 leading-snug">
-            {pair.questionText}
-          </h2>
-          {pair.questionType === 'estimation' && (
-            <p className="text-base text-gray-500">
-              Bitte schätze den Wert in Prozent.
-            </p>
-          )}
-          <button
-            onClick={() => setSubStep('visual_a')}
-            autoFocus
-            className="mt-4 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-10 py-4 text-lg font-semibold text-white shadow-md
-                       transition-all duration-150 hover:bg-blue-700 hover:shadow-lg active:scale-95
-                       focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2"
-          >
-            Darstellung anzeigen
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-            </svg>
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  function renderVisual(
-    visual: 'a' | 'b',
-    iframeUrl: string,
-    reportType: 'native' | 'ibcs',
-    selected: string | null,
-    onMcSelect: (id: string) => void,
-    estimationValue: string,
-    onEstimationChange: (v: string) => void,
-    onEstimationSubmit: () => void,
-  ) {
-    const label = visual === 'a' ? 'A' : 'B';
-    const isIbcs = reportType === 'ibcs';
-    const showHint = isIbcs && !!pair.specialInstructions;
-
-    return (
-      <div className="flex h-screen w-full overflow-hidden bg-[#f8f9fa]">
-
-        {/* ── Left: Power BI iframe (70%) ──────────────────────── */}
+        {/* ── Left: Iframe area (70%) ──────────────────────── */}
         <div className="flex-[7] relative bg-gray-200 border-r border-gray-300">
-          {/* Loading skeleton */}
-          {!iframeLoaded && (
+
+          {/* Loading spinner — only for the ACTIVE iframe */}
+          {!activeIframeLoaded && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-gray-100 z-10">
               <svg className="h-8 w-8 animate-spin text-blue-400" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -295,18 +278,32 @@ export default function DuelStep({
             </div>
           )}
 
+          {/* Iframe A — visible only during visual_a */}
           <iframe
-            src={iframeUrl}
+            src={iframeUrlA}
             width="100%"
             height="100%"
             frameBorder="0"
-            title={`Darstellung ${label}`}
-            onLoad={handleIframeLoad}
+            title="Darstellung A"
+            onLoad={() => setIframeLoadedA(true)}
+            style={{ display: subStep === 'visual_a' ? 'block' : 'none' }}
+            className="absolute inset-0 h-full w-full"
+          />
+
+          {/* Iframe B — visible only during visual_b */}
+          <iframe
+            src={iframeUrlB}
+            width="100%"
+            height="100%"
+            frameBorder="0"
+            title="Darstellung B"
+            onLoad={() => setIframeLoadedB(true)}
+            style={{ display: subStep === 'visual_b' ? 'block' : 'none' }}
             className="absolute inset-0 h-full w-full"
           />
         </div>
 
-        {/* ── Right: Task panel (30%) ───────────────────────────── */}
+        {/* ── Right: Task panel (30%) ──────────────────────── */}
         <aside className="flex-[3] flex flex-col overflow-y-auto bg-white shadow-[-4px_0_16px_rgba(0,0,0,0.06)]">
 
           {/* Panel header */}
@@ -314,7 +311,7 @@ export default function DuelStep({
             <div className="flex items-center justify-between">
               {renderProgress()}
               <span className="rounded-full bg-blue-100 px-4 py-1.5 text-sm font-semibold text-blue-700 ring-1 ring-blue-200">
-                Darstellung {label}
+                Darstellung {subStep === 'visual_a' ? 'A' : 'B'}
               </span>
             </div>
           </div>
@@ -328,31 +325,33 @@ export default function DuelStep({
             </p>
 
             {/* Scenario-notation hint (P3, IBCS visual only) */}
-            {showHint && (
+            {((subStep === 'visual_a' && typeA === 'ibcs') ||
+              (subStep === 'visual_b' && typeB === 'ibcs')) &&
+              pair.specialInstructions && (
               <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
                 <span className="font-semibold">Hinweis: </span>
                 {pair.specialInstructions}
               </div>
             )}
 
-            {/* MC options (not for P2) */}
-            {!isP2 && pair.questionType === 'mc' && pair.options && (
+            {/* MC options (not for P2) — Visual A */}
+            {subStep === 'visual_a' && !isP2 && pair.questionType === 'mc' && pair.options && (
               <div className="space-y-2.5">
                 <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-3">
                   Deine Antwort
                 </p>
                 {pair.options.map((opt) => {
-                  const isSelected = selected === opt.id;
+                  const isSelected = selectedA === opt.id;
                   return (
                     <button
                       key={opt.id}
-                      onClick={() => onMcSelect(opt.id)}
-                      disabled={selected !== null}
+                      onClick={() => handleMcSelectA(opt.id)}
+                      disabled={selectedA !== null}
                       className={[
                         'w-full rounded-lg border px-4 py-3.5 text-left text-sm font-medium transition-all duration-150',
                         isSelected
                           ? 'border-blue-600 bg-blue-50 text-blue-800 shadow-sm'
-                          : selected !== null
+                          : selectedA !== null
                           ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed'
                           : 'border-gray-200 bg-white text-gray-700 shadow-sm hover:border-blue-400 hover:bg-blue-50 hover:shadow-md active:scale-[0.99]',
                       ].join(' ')}
@@ -371,8 +370,44 @@ export default function DuelStep({
               </div>
             )}
 
-            {/* Estimation input (P5) */}
-            {!isP2 && pair.questionType === 'estimation' && (
+            {/* MC options (not for P2) — Visual B */}
+            {subStep === 'visual_b' && !isP2 && pair.questionType === 'mc' && pair.options && (
+              <div className="space-y-2.5">
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-3">
+                  Deine Antwort
+                </p>
+                {pair.options.map((opt) => {
+                  const isSelected = selectedB === opt.id;
+                  return (
+                    <button
+                      key={opt.id}
+                      onClick={() => handleMcSelectB(opt.id)}
+                      disabled={selectedB !== null}
+                      className={[
+                        'w-full rounded-lg border px-4 py-3.5 text-left text-sm font-medium transition-all duration-150',
+                        isSelected
+                          ? 'border-blue-600 bg-blue-50 text-blue-800 shadow-sm'
+                          : selectedB !== null
+                          ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed'
+                          : 'border-gray-200 bg-white text-gray-700 shadow-sm hover:border-blue-400 hover:bg-blue-50 hover:shadow-md active:scale-[0.99]',
+                      ].join(' ')}
+                    >
+                      <span className="flex items-center gap-3">
+                        {isSelected && (
+                          <svg className="h-5 w-5 flex-shrink-0 text-blue-600" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                        {opt.label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Estimation input (P5) — Visual A */}
+            {subStep === 'visual_a' && !isP2 && pair.questionType === 'estimation' && (
               <div className="space-y-4">
                 <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest">
                   Schätzung in %
@@ -380,9 +415,9 @@ export default function DuelStep({
                 <div className="flex items-center gap-4">
                   <input
                     type="number"
-                    value={estimationValue}
-                    onChange={(e) => onEstimationChange(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && onEstimationSubmit()}
+                    value={estimationA}
+                    onChange={(e) => setEstimationA(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleEstimationSubmitA()}
                     placeholder="z. B. 25"
                     autoFocus
                     className="w-36 rounded-xl border-2 border-gray-300 bg-white px-4 py-3 text-lg text-gray-800 shadow-sm
@@ -390,8 +425,38 @@ export default function DuelStep({
                   />
                   <span className="text-lg text-gray-400 font-medium">%</span>
                   <button
-                    onClick={onEstimationSubmit}
-                    disabled={!estimationValue.trim()}
+                    onClick={handleEstimationSubmitA}
+                    disabled={!estimationA.trim()}
+                    className="rounded-xl bg-blue-600 px-8 py-3 font-semibold text-white shadow-md hover:bg-blue-700 hover:shadow-lg
+                               disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-150 active:scale-95"
+                  >
+                    Bestätigen
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Estimation input (P5) — Visual B */}
+            {subStep === 'visual_b' && !isP2 && pair.questionType === 'estimation' && (
+              <div className="space-y-4">
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest">
+                  Schätzung in %
+                </p>
+                <div className="flex items-center gap-4">
+                  <input
+                    type="number"
+                    value={estimationB}
+                    onChange={(e) => setEstimationB(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleEstimationSubmitB()}
+                    placeholder="z. B. 25"
+                    autoFocus
+                    className="w-36 rounded-xl border-2 border-gray-300 bg-white px-4 py-3 text-lg text-gray-800 shadow-sm
+                               focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/25"
+                  />
+                  <span className="text-lg text-gray-400 font-medium">%</span>
+                  <button
+                    onClick={handleEstimationSubmitB}
+                    disabled={!estimationB.trim()}
                     className="rounded-xl bg-blue-600 px-8 py-3 font-semibold text-white shadow-md hover:bg-blue-700 hover:shadow-lg
                                disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-150 active:scale-95"
                   >
@@ -402,12 +467,17 @@ export default function DuelStep({
             )}
 
             {/* P2: just a next button */}
-            {isP2 && (
+            {subStep === 'visual_a' && isP2 && (
               <button
-                onClick={() => {
-                  setIframeLoaded(false);
-                  setSubStep(visual === 'a' ? 'visual_b' : 'preference');
-                }}
+                onClick={() => activateVisualB()}
+                className="mt-4 rounded-xl bg-blue-600 px-10 py-4 text-lg font-semibold text-white shadow-md hover:bg-blue-700 hover:shadow-lg active:scale-95 transition-all duration-150"
+              >
+                Weiter
+              </button>
+            )}
+            {subStep === 'visual_b' && isP2 && (
+              <button
+                onClick={() => setSubStep('preference')}
                 className="mt-4 rounded-xl bg-blue-600 px-10 py-4 text-lg font-semibold text-white shadow-md hover:bg-blue-700 hover:shadow-lg active:scale-95 transition-all duration-150"
               >
                 Weiter
@@ -416,63 +486,91 @@ export default function DuelStep({
           </div>
         </aside>
       </div>
-    );
-  }
 
-  function renderPreference() {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-8 bg-[#f8f9fa] px-6 py-12">
-        <div className="w-full max-w-2xl space-y-8 text-center">
-          {renderProgress()}
-          <h2 className="text-3xl font-bold text-gray-900">
-            Welche Darstellung war für dich eindeutiger?
-          </h2>
-          <div className="flex justify-center gap-6">
-            {(['a', 'b'] as const).map((pref) => (
-              <button
-                key={pref}
-                onClick={() => handlePreference(pref)}
-                disabled={preference !== null}
-                className={[
-                  'w-52 rounded-2xl border-2 py-8 text-xl font-bold transition-all duration-150 shadow-sm',
-                  preference === pref
-                    ? 'border-blue-600 bg-blue-600 text-white shadow-md'
-                    : preference !== null
-                    ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : 'border-gray-200 bg-white text-gray-700 hover:border-blue-400 hover:bg-blue-50 hover:shadow-md active:scale-[0.98]',
-                ].join(' ')}
-              >
-                Darstellung {pref.toUpperCase()}
-              </button>
-            ))}
+      {/* ═══════════════════════════════════════════════════════ */}
+      {/* QUESTION SCREEN                                        */}
+      {/* ═══════════════════════════════════════════════════════ */}
+      {subStep === 'question' && (
+        <div
+          className="flex min-h-screen flex-col items-center justify-center gap-8 bg-[#f8f9fa] px-6 py-12"
+          tabIndex={-1}
+          onKeyDown={(e) => e.key === 'Enter' && iframeLoadedA && handleShowVisualA()}
+        >
+          <div className="w-full max-w-2xl space-y-6 text-center">
+            {renderProgress()}
+            <h2 className="text-3xl font-bold text-gray-900 leading-snug">
+              {pair.questionText}
+            </h2>
+            {pair.questionType === 'estimation' && (
+              <p className="text-base text-gray-500">
+                Bitte schätze den Wert in Prozent.
+              </p>
+            )}
+            <button
+              onClick={handleShowVisualA}
+              disabled={!iframeLoadedA}
+              autoFocus
+              className={[
+                'mt-4 inline-flex items-center gap-2 rounded-xl px-10 py-4 text-lg font-semibold shadow-md',
+                'transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2',
+                iframeLoadedA
+                  ? 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg active:scale-95'
+                  : 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none',
+              ].join(' ')}
+            >
+              {iframeLoadedA ? (
+                <>
+                  Darstellung anzeigen
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                  </svg>
+                </>
+              ) : (
+                <>
+                  <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                  </svg>
+                  Darstellung wird geladen …
+                </>
+              )}
+            </button>
           </div>
         </div>
-      </div>
-    );
-  }
+      )}
 
-  // ── Main render switch ────────────────────────────────────
-
-  switch (subStep) {
-    case 'question':
-      return renderQuestion();
-
-    case 'visual_a':
-      return renderVisual(
-        'a', iframeUrlA, typeA, selectedA,
-        handleMcSelectA, estimationA, setEstimationA, handleEstimationSubmitA,
-      );
-
-    case 'visual_b':
-      return renderVisual(
-        'b', iframeUrlB, typeB, selectedB,
-        handleMcSelectB, estimationB, setEstimationB, handleEstimationSubmitB,
-      );
-
-    case 'preference':
-      return renderPreference();
-
-    default:
-      return null;
-  }
+      {/* ═══════════════════════════════════════════════════════ */}
+      {/* PREFERENCE SCREEN                                      */}
+      {/* ═══════════════════════════════════════════════════════ */}
+      {subStep === 'preference' && (
+        <div className="flex min-h-screen flex-col items-center justify-center gap-8 bg-[#f8f9fa] px-6 py-12">
+          <div className="w-full max-w-2xl space-y-8 text-center">
+            {renderProgress()}
+            <h2 className="text-3xl font-bold text-gray-900">
+              Welche Darstellung war für dich eindeutiger?
+            </h2>
+            <div className="flex justify-center gap-6">
+              {(['a', 'b'] as const).map((pref) => (
+                <button
+                  key={pref}
+                  onClick={() => handlePreference(pref)}
+                  disabled={preference !== null}
+                  className={[
+                    'w-52 rounded-2xl border-2 py-8 text-xl font-bold transition-all duration-150 shadow-sm',
+                    preference === pref
+                      ? 'border-blue-600 bg-blue-600 text-white shadow-md'
+                      : preference !== null
+                      ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'border-gray-200 bg-white text-gray-700 hover:border-blue-400 hover:bg-blue-50 hover:shadow-md active:scale-[0.98]',
+                  ].join(' ')}
+                >
+                  Darstellung {pref.toUpperCase()}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
