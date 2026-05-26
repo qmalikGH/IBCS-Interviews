@@ -21,6 +21,7 @@ export interface PairConfig {
   questionText: string;          // The question shown to participant
   questionType: 'mc' | 'preference' | 'estimation';
   options?: PairOption[];        // MC options (undefined for preference/estimation)
+  optionsBySide?: { native: PairOption[]; ibcs: PairOption[] };  // side-specific MC options (overrides options)
   correctAnswer?: string;        // correct option id (undefined for preference)
   nativePageName: string;        // Power BI page name for native visual
   ibcsPageName: string;          // Power BI page name for IBCS visual
@@ -161,14 +162,23 @@ export const pairs: PairConfig[] = [
     questionText:
       'Welche Kostenstelle weicht am stärksten vom Plan ab — und wie groß ist die Abweichung?',
     questionType: 'mc',
-    options: [
-      { id: 'P6_A', label: 'Marketing, −72,3 M' },
-      { id: 'P6_B', label: 'Vertrieb, −20,2 M' },
-      { id: 'P6_C', label: 'Finanzen, −54,5 M' },
-      { id: 'P6_D', label: 'Logistik, −9,6 M' },
-      { id: 'P6_E', label: 'Personal, −5,6 M' },
-    ],
-    correctAnswer: 'P6_A',  // overridden per side in session logic
+    optionsBySide: {
+      native: [
+        { id: 'P6_native_1', label: 'Marketing, −72,3 M' },
+        { id: 'P6_native_2', label: 'Vertrieb, −56,9 M' },
+        { id: 'P6_native_3', label: 'Finanzen, −54,5 M' },
+        { id: 'P6_native_4', label: 'Logistik, −9,6 M' },
+        { id: 'P6_native_5', label: 'Personal, −5,6 M' },
+      ],
+      ibcs: [
+        { id: 'P6_ibcs_1', label: 'Vertrieb, −20,2 M' },
+        { id: 'P6_ibcs_2', label: 'Finanzen, +5,4 M' },
+        { id: 'P6_ibcs_3', label: 'Marketing, +3,1 M' },
+        { id: 'P6_ibcs_4', label: 'F&E, −0,3 M' },
+        { id: 'P6_ibcs_5', label: 'Logistik, +0,2 M' },
+      ],
+    },
+    correctAnswer: 'P6_native_1',  // overridden per side in session logic
     nativePageName: '8cd2da11605414f1ddf2',  // P6 Nativ
     ibcsPageName:   '5798cd9d5def45edb15e',  // P6 IBCS
     hasTimer: true,
@@ -234,7 +244,7 @@ export const pairSideAnswers: Record<string, SideAnswers> = {
   P3: { native: 'P3_A', ibcs: 'P3_B' },
   P4: { native: 'P4_A', ibcs: 'P4_B' },
   P5: { native: 'estimation', ibcs: 'estimation' },
-  P6: { native: 'P6_A', ibcs: 'P6_B' },
+  P6: { native: 'P6_native_1', ibcs: 'P6_ibcs_1' },
   P7: { native: 'P7_A', ibcs: 'P7_B' },
   P8: { native: 'P8_A', ibcs: 'P8_B' },
 };

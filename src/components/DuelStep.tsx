@@ -21,7 +21,7 @@
 //   P5  — number-input estimation instead of MC
 // ============================================================
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useStore } from '@/lib/store';
 import { startTimer, stopTimer } from '@/lib/timer';
 import { saveResponse } from '@/lib/supabase';
@@ -78,6 +78,10 @@ export default function DuelStep({
 
   const correctA = pairSideAnswers[pair.id]?.[typeA] ?? '';
   const correctB = pairSideAnswers[pair.id]?.[typeB] ?? '';
+
+  // Resolve per-side options (optionsBySide takes precedence over options)
+  const optionsA = pair.optionsBySide ? pair.optionsBySide[typeA] : pair.options;
+  const optionsB = pair.optionsBySide ? pair.optionsBySide[typeB] : pair.options;
 
   // ── Sub-step state ────────────────────────────────────────
   const isP2 = pair.id === 'P2';
@@ -150,21 +154,28 @@ export default function DuelStep({
 
   // ── Advance helpers ───────────────────────────────────────
 
-  /** User clicks "Darstellung anzeigen" — show visual A, start timer */
+  /** User clicks "Darstellung anzeigen" — show visual A */
   function handleShowVisualA() {
     setSubStep('visual_a');
-    if (pair.hasTimer) {
-      timerStartRef.current = startTimer();
-    }
   }
 
-  /** Visual B becomes active — start its timer */
+  /** Visual B becomes active */
   function activateVisualB() {
     setSubStep('visual_b');
-    if (pair.hasTimer) {
+  }
+
+  // ── Timer fairness: start only when iframe is loaded AND visible ──
+  useEffect(() => {
+    if (subStep === 'visual_a' && iframeLoadedA && pair.hasTimer && timerStartRef.current === null) {
       timerStartRef.current = startTimer();
     }
-  }
+  }, [subStep, iframeLoadedA, pair.hasTimer]);
+
+  useEffect(() => {
+    if (subStep === 'visual_b' && iframeLoadedB && pair.hasTimer && timerStartRef.current === null) {
+      timerStartRef.current = startTimer();
+    }
+  }, [subStep, iframeLoadedB, pair.hasTimer]);
 
   /** MC answer selected on visual A */
   async function handleMcSelectA(optionId: string) {
@@ -335,12 +346,12 @@ export default function DuelStep({
             )}
 
             {/* MC options (not for P2) — Visual A */}
-            {subStep === 'visual_a' && !isP2 && pair.questionType === 'mc' && pair.options && (
+            {subStep === 'visual_a' && !isP2 && pair.questionType === 'mc' && optionsA && (
               <div className="space-y-2.5">
                 <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-3">
                   Deine Antwort
                 </p>
-                {pair.options.map((opt) => {
+                {optionsA.map((opt) => {
                   const isSelected = selectedA === opt.id;
                   return (
                     <button
@@ -371,12 +382,12 @@ export default function DuelStep({
             )}
 
             {/* MC options (not for P2) — Visual B */}
-            {subStep === 'visual_b' && !isP2 && pair.questionType === 'mc' && pair.options && (
+            {subStep === 'visual_b' && !isP2 && pair.questionType === 'mc' && optionsB && (
               <div className="space-y-2.5">
                 <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-3">
                   Deine Antwort
                 </p>
-                {pair.options.map((opt) => {
+                {optionsB.map((opt) => {
                   const isSelected = selectedB === opt.id;
                   return (
                     <button
