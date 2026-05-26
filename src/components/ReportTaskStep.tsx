@@ -139,7 +139,7 @@ export default function ReportTaskStep({
   // ── Render ────────────────────────────────────────────────
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-[#f8f9fa]">
+    <div className="flex h-[calc(100vh-36px)] mt-[36px] w-full overflow-hidden bg-[#f8f9fa]">
 
       {/* ── Left: Power BI iframe (70%) ──────────────────────── */}
       <div className="flex-[7] relative bg-gray-200 border-r border-gray-300">

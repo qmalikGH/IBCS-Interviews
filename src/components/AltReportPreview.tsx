@@ -57,7 +57,7 @@ export default function AltReportPreview() {
   const iframeUrl   = buildPbiPageUrl(altBaseUrl, altPageName);
 
   return (
-    <div className="flex h-screen w-full flex-col bg-[#f8f9fa]">
+    <div className="flex h-[calc(100vh-36px)] mt-[36px] w-full flex-col bg-[#f8f9fa]">
 
       {/* ── Header ──────────────────────────────────────────── */}
       <div className="flex-shrink-0 border-b border-gray-200 bg-white px-8 py-5 shadow-sm">

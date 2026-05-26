@@ -273,7 +273,7 @@ export default function DuelStep({
         style={{
           display: (subStep === 'visual_a' || subStep === 'visual_b') ? 'flex' : 'none',
         }}
-        className="h-screen w-full overflow-hidden bg-[#f8f9fa]"
+        className="h-[calc(100vh-36px)] mt-[36px] w-full overflow-hidden bg-[#f8f9fa]"
       >
         {/* ── Left: Iframe area (70%) ──────────────────────── */}
         <div className="flex-[7] relative bg-gray-200 border-r border-gray-300">
@@ -503,7 +503,7 @@ export default function DuelStep({
       {/* ═══════════════════════════════════════════════════════ */}
       {subStep === 'question' && (
         <div
-          className="flex min-h-screen flex-col items-center justify-center gap-8 bg-[#f8f9fa] px-6 py-12"
+          className="flex min-h-[calc(100vh-36px)] mt-[36px] flex-col items-center justify-center gap-8 bg-[#f8f9fa] px-6 py-12"
           tabIndex={-1}
           onKeyDown={(e) => e.key === 'Enter' && handleShowVisualA()}
         >
@@ -546,7 +546,7 @@ export default function DuelStep({
       {/* PREFERENCE SCREEN                                      */}
       {/* ═══════════════════════════════════════════════════════ */}
       {subStep === 'preference' && (
-        <div className="flex min-h-screen flex-col items-center justify-center gap-8 bg-[#f8f9fa] px-6 py-12">
+        <div className="flex min-h-[calc(100vh-36px)] mt-[36px] flex-col items-center justify-center gap-8 bg-[#f8f9fa] px-6 py-12">
           <div className="w-full max-w-2xl space-y-8 text-center">
             {renderProgress()}
             <h2 className="text-3xl font-bold text-gray-900">
