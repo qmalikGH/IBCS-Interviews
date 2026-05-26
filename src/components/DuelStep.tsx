@@ -494,7 +494,7 @@ export default function DuelStep({
         <div
           className="flex min-h-screen flex-col items-center justify-center gap-8 bg-[#f8f9fa] px-6 py-12"
           tabIndex={-1}
-          onKeyDown={(e) => e.key === 'Enter' && iframeLoadedA && handleShowVisualA()}
+          onKeyDown={(e) => e.key === 'Enter' && handleShowVisualA()}
         >
           <div className="w-full max-w-2xl space-y-6 text-center">
             {renderProgress()}
@@ -508,33 +508,25 @@ export default function DuelStep({
             )}
             <button
               onClick={handleShowVisualA}
-              disabled={!iframeLoadedA}
               autoFocus
-              className={[
-                'mt-4 inline-flex items-center gap-2 rounded-xl px-10 py-4 text-lg font-semibold shadow-md',
-                'transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2',
-                iframeLoadedA
-                  ? 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg active:scale-95'
-                  : 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none',
-              ].join(' ')}
+              className="mt-4 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-10 py-4 text-lg font-semibold text-white shadow-md
+                         transition-all duration-150 hover:bg-blue-700 hover:shadow-lg active:scale-95
+                         focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2"
             >
-              {iframeLoadedA ? (
-                <>
-                  Darstellung anzeigen
-                  <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                  </svg>
-                </>
-              ) : (
-                <>
-                  <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                  </svg>
-                  Darstellung wird geladen …
-                </>
-              )}
+              Darstellung anzeigen
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+              </svg>
             </button>
+            {!iframeLoadedA && (
+              <p className="mt-3 flex items-center justify-center gap-2 text-sm text-gray-400">
+                <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                </svg>
+                Darstellung wird vorbereitet …
+              </p>
+            )}
           </div>
         </div>
       )}
