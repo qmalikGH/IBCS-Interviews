@@ -96,13 +96,13 @@ export default function WelcomeStep() {
           </p>
           <ol className="list-decimal ml-5 space-y-1.5">
             <li>
-              <strong>Bildpaare</strong> — Du siehst jeweils zwei Darstellungen
-              derselben Zahlen und beantwortest eine kurze Frage dazu.
+              <strong>Bildpaare</strong> — Du siehst jeweils zwei
+              Diagramm-Varianten nebeneinander und beantwortest eine
+              kurze Frage dazu.
             </li>
             <li>
               <strong>Berichtsanalyse</strong> — Du arbeitest mit einem
-              vollständigen Controlling-Bericht und löst typische
-              Analyseaufgaben.
+              Controlling-Bericht und beantwortest sechs Analysefragen.
             </li>
             <li>
               <strong>Bewertung</strong> — Abschließend ein paar kurze Fragen
