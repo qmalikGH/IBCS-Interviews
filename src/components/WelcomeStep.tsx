@@ -96,9 +96,9 @@ export default function WelcomeStep() {
           </p>
           <ol className="list-decimal ml-5 space-y-1.5">
             <li>
-              <strong>Bildpaare</strong> — Du siehst jeweils zwei
-              Diagramm-Varianten nebeneinander und beantwortest eine
-              kurze Frage dazu.
+              <strong>Bildpaare</strong> — Du siehst nacheinander zwei
+              Diagramm-Varianten und beantwortest jeweils eine kurze
+              Frage dazu.
             </li>
             <li>
               <strong>Berichtsanalyse</strong> — Du arbeitest mit einem
