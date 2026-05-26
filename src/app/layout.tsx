@@ -10,6 +10,7 @@ const geistSans = Geist({
 export const metadata: Metadata = {
   title: "IBCS Interview-Tool",
   description: "Forschungsstudie zu Berichtsdarstellungen",
+  robots: { index: false, follow: false },
 };
 
 export default function RootLayout({

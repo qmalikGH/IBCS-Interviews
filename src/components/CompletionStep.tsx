@@ -124,6 +124,18 @@ export default function CompletionStep() {
           </div>
         )}
 
+        {/* Legal link */}
+        <div className="text-xs text-gray-400">
+          <a
+            href="/datenschutz"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:text-gray-600"
+          >
+            Datenschutz &amp; Impressum
+          </a>
+        </div>
+
         {/* Closing note */}
         <p className="text-sm text-gray-400 italic">
           Du kannst dieses Fenster nun schließen.

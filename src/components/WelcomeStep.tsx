@@ -149,7 +149,18 @@ export default function WelcomeStep() {
                          focus:ring-2 focus:ring-blue-500/30 disabled:cursor-not-allowed"
             />
             <span className="text-sm leading-6 text-gray-600">
-              Ich stimme der anonymisierten Erfassung meiner Antworten zu.
+              Ich habe die{' '}
+              <a
+                href="/datenschutz"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 underline hover:text-blue-800"
+                onClick={(e) => e.stopPropagation()}
+              >
+                Datenschutzhinweise
+              </a>{' '}
+              gelesen und stimme der Teilnahme freiwillig zu. Ich kann
+              jederzeit ohne Angabe von Gründen abbrechen.
             </span>
           </label>
         </div>
@@ -183,6 +194,18 @@ export default function WelcomeStep() {
             'Interview starten'
           )}
         </button>
+
+        {/* ── Legal link ──────────────────────────────────────── */}
+        <div className="mt-6 text-center text-xs text-gray-400">
+          <a
+            href="/datenschutz"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:text-gray-600"
+          >
+            Datenschutz &amp; Impressum
+          </a>
+        </div>
       </div>
     </div>
   );
