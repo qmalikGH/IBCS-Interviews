@@ -16,11 +16,16 @@ import {
 
 // ── Step-count constants ──────────────────────────────────────
 // These reflect the wizard design spec (between-subjects redesign):
-//   Stufe 1 : 8 pairs × 1 step each       = 8
-//   Stufe 2 Tasks : 6 tasks, ONE report    = 6
-//   Stufe 2 Alt-Preview : 1 step           = 1
-//   Stufe 3 (feedback)                     = 1
-//   Welcome / Completed are not counted toward progress.
+//   Welcome                                       = 0 (not tracked)
+//   Onboarding (3 info pages, no tasks)            = 0 (not tracked)
+//   Stufe 1 : 8 pairs × 1 step each               = 8
+//   Stufe 2 Tasks : 6 tasks, ONE report            = 6
+//   Stufe 2 Alt-Preview : 1 step                   = 1
+//   Stufe 3 : 14 questions on sequential screens,  = 1
+//             counted as 1 step in global counter;
+//             Stage3Controller shows its own
+//             sub-counter "Frage X / 14"
+//   Completed                                      = 0 (not tracked)
 //
 // Total trackable steps: 8 + 6 + 1 + 1 = 16
 // Adjust these if the task-config changes.
