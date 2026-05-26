@@ -19,11 +19,18 @@ export default function WelcomeStep() {
   const initSession = useStore((s) => s.initSession);
 
   const [role, setRole] = useState('');
+  const [powerbiFamiliarity, setPowerbiFamiliarity] = useState('');
+  const [ibcsFamiliarity, setIbcsFamiliarity] = useState('');
   const [privacyChecked, setPrivacyChecked] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const canSubmit = role.trim().length > 0 && privacyChecked && !isSubmitting;
+  const canSubmit =
+    role.trim().length > 0 &&
+    powerbiFamiliarity !== '' &&
+    ibcsFamiliarity !== '' &&
+    privacyChecked &&
+    !isSubmitting;
 
   async function handleStart() {
     if (!canSubmit) return;
@@ -40,6 +47,8 @@ export default function WelcomeStep() {
       // 2. Persist session row in Supabase
       const sessionId = await createSession({
         participant_role: role.trim(),
+        powerbi_familiarity: powerbiFamiliarity,
+        ibcs_familiarity: ibcsFamiliarity,
         report_order: reportOrder,
         pair_order: pairOrder,
         pair_side_order: pairSideOrder,
@@ -135,6 +144,55 @@ export default function WelcomeStep() {
                        focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/25 focus:shadow-md
                        disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400"
           />
+        </div>
+
+        {/* ── Power BI familiarity ─────────────────────────────── */}
+        <div className="mb-6">
+          <label
+            htmlFor="powerbi-familiarity"
+            className="mb-1.5 block text-sm font-semibold text-gray-700"
+          >
+            Wie vertraut bist du mit Power BI?
+          </label>
+          <select
+            id="powerbi-familiarity"
+            value={powerbiFamiliarity}
+            onChange={(e) => setPowerbiFamiliarity(e.target.value)}
+            disabled={isSubmitting}
+            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900
+                       shadow-sm transition-shadow duration-150 appearance-none
+                       focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/25 focus:shadow-md
+                       disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400"
+          >
+            <option value="" disabled>Bitte auswählen</option>
+            <option value="nicht_vertraut">Nicht vertraut</option>
+            <option value="vertraut">Vertraut</option>
+          </select>
+        </div>
+
+        {/* ── IBCS familiarity ────────────────────────────────── */}
+        <div className="mb-6">
+          <label
+            htmlFor="ibcs-familiarity"
+            className="mb-1.5 block text-sm font-semibold text-gray-700"
+          >
+            Wie vertraut bist du mit IBCS / Hichert?
+          </label>
+          <select
+            id="ibcs-familiarity"
+            value={ibcsFamiliarity}
+            onChange={(e) => setIbcsFamiliarity(e.target.value)}
+            disabled={isSubmitting}
+            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900
+                       shadow-sm transition-shadow duration-150 appearance-none
+                       focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/25 focus:shadow-md
+                       disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400"
+          >
+            <option value="" disabled>Bitte auswählen</option>
+            <option value="nicht_vertraut">Nicht vertraut</option>
+            <option value="leicht_vertraut">Leicht vertraut</option>
+            <option value="vertraut">Vertraut</option>
+          </select>
         </div>
 
         {/* ── Privacy checkbox ─────────────────────────────────── */}

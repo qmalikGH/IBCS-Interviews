@@ -22,6 +22,8 @@ type DbRelationship = {
 export type Session = {
   id: string;
   participant_role: string;
+  powerbi_familiarity: string | null;   // 'nicht_vertraut' | 'vertraut'
+  ibcs_familiarity: string | null;      // 'nicht_vertraut' | 'leicht_vertraut' | 'vertraut'
   started_at: string;            // ISO 8601 timestamptz
   completed_at: string | null;   // NULL until finished
   report_order: 'native_first' | 'ibcs_first';
