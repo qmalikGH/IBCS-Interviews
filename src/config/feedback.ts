@@ -49,7 +49,7 @@ export const feedbackQuestions: FeedbackQuestion[] = [
   {
     id: 'FQ1',
     questionText:
-      'Die Farbcodierung im IBCS-Bericht (Rot = über Plan, Grün = unter Plan) war für mich intuitiv verständlich.',
+      'Die Farbcodierung im IBCS-Bericht (Rot = ungünstige Abweichung, Blau = günstige Abweichung) war für mich intuitiv verständlich.',
     type: 'likert5',
     options: likert5Options,
     relatedRule: 'D-03',
