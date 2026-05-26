@@ -108,6 +108,7 @@ export const pairs: PairConfig[] = [
       { id: 'P3_C', label: 'Logistik' },
       { id: 'P3_D', label: 'Vertrieb' },
       { id: 'P3_E', label: 'Personal' },
+      { id: 'P3_F', label: 'Forschung und Entwicklung' },
     ],
     correctAnswer: 'P3_A',  // overridden per side in session logic
     nativePageName: '6aae964700b7bd4c7d38',  // P3 Nativ
