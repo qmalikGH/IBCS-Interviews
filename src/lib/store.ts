@@ -27,6 +27,7 @@ import {
 
 const STEPS_PER_PHASE: Record<Phase, number> = {
   welcome:             0,  // not tracked in progress bar
+  onboarding:          0,  // informational screens, not tracked
   stufe1:              8,
   stufe2_tasks:        6,
   stufe2_alt_preview:  1,
@@ -79,7 +80,7 @@ export const useStore = create<Store>()((set, get) => ({
       reportOrder,
       pairOrder,
       pairSideOrder,
-      currentPhase:     'stufe1',  // move past welcome immediately
+      currentPhase:     'onboarding',  // show convention briefing before stufe1
       currentStepIndex: 0,
       completedSteps:   0,
     });

@@ -11,6 +11,7 @@
 import { useStore } from '@/lib/store';
 import ProgressBar from '@/components/ProgressBar';
 import WelcomeStep from '@/components/WelcomeStep';
+import OnboardingStep from '@/components/OnboardingStep';
 import Stage1Controller from '@/components/Stage1Controller';
 import Stage2Controller from '@/components/Stage2Controller';
 import AltReportPreview from '@/components/AltReportPreview';
@@ -24,6 +25,9 @@ export default function Home() {
     switch (currentPhase) {
       case 'welcome':
         return <WelcomeStep />;
+
+      case 'onboarding':
+        return <OnboardingStep />;
 
       case 'stufe1':
         return <Stage1Controller />;

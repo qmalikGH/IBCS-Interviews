@@ -13,7 +13,7 @@ export default function ProgressBar() {
   const getProgress = useStore((s) => s.getProgress);
 
   // Not visible on the first and last screens
-  if (currentPhase === 'welcome' || currentPhase === 'completed') {
+  if (currentPhase === 'welcome' || currentPhase === 'onboarding' || currentPhase === 'completed') {
     return null;
   }
 

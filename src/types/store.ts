@@ -17,6 +17,7 @@
  */
 export type Phase =
   | 'welcome'
+  | 'onboarding'
   | 'stufe1'
   | 'stufe2_tasks'
   | 'stufe2_alt_preview'
@@ -26,6 +27,7 @@ export type Phase =
 /** Ordered list of phases for sequential navigation. */
 export const PHASE_ORDER: Phase[] = [
   'welcome',
+  'onboarding',
   'stufe1',
   'stufe2_tasks',
   'stufe2_alt_preview',
