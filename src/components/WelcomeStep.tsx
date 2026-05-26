@@ -166,6 +166,7 @@ export default function WelcomeStep() {
           >
             <option value="" disabled>Bitte auswählen</option>
             <option value="nicht_vertraut">Nicht vertraut</option>
+            <option value="leicht_vertraut">Leicht vertraut</option>
             <option value="vertraut">Vertraut</option>
           </select>
         </div>
