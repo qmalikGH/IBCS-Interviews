@@ -38,7 +38,7 @@ export default function ProgressBar() {
       {/* Text label */}
       <div className="flex justify-end px-6 py-1.5">
         <span className="text-[11px] font-medium text-gray-400 tabular-nums tracking-wide">
-          Schritt {current} von {total}
+          Schritt {Math.min(current + 1, total)} von {total}
         </span>
       </div>
     </div>
